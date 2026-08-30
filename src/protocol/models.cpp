@@ -87,7 +87,7 @@ QJsonObject ChatMessage::toJson() const {
     if (replyToMessageId.has_value()) {
         obj["reply_to_message_id"] = *replyToMessageId;
     } else {
-        obj["reply_to_message_id"] = QJsonValue::Null;
+        obj["reply_to_message_id"] = QJsonValue();
     }
     return obj;
 }
