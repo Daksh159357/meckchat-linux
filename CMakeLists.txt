@@ -16,8 +16,15 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 
-# Core Library Target
+# Core Library Target (include headers explicitly for AUTOMOC)
 add_library(meckchat_core STATIC
+    include/meckchat/core/logger.h
+    include/meckchat/core/config.h
+    include/meckchat/protocol/models.h
+    include/meckchat/protocol/framing.h
+    include/meckchat/network/mqtt_signaling.h
+    include/meckchat/network/p2p_socket.h
+    include/meckchat/network/wireguard_service.h
     src/core/logger.cpp
     src/core/config.cpp
     src/protocol/models.cpp
@@ -38,9 +45,9 @@ target_link_libraries(meckchat_core PUBLIC
 
 # Application Executable Target
 add_executable(meckchat-linux
-    src/main.cpp
     src/ui/mainwindow.h
     src/ui/mainwindow.cpp
+    src/main.cpp
     resources/resources.qrc
 )
 
