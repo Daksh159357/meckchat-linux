@@ -39,6 +39,7 @@ target_link_libraries(meckchat_core PUBLIC
 # Application Executable Target
 add_executable(meckchat-linux
     src/main.cpp
+    src/ui/mainwindow.h
     src/ui/mainwindow.cpp
     resources/resources.qrc
 )
@@ -49,19 +50,23 @@ target_include_directories(meckchat-linux PRIVATE
 
 target_link_libraries(meckchat-linux PRIVATE
     meckchat_core
+    Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    Qt6::Network
 )
 
 # CTest Testing Targets
 enable_testing()
 
 add_executable(test_protocol tests/test_protocol.cpp)
-target_link_libraries(test_protocol PRIVATE meckchat_core)
+target_include_directories(test_protocol PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_protocol PRIVATE meckchat_core Qt6::Core)
 add_test(NAME ProtocolTest COMMAND test_protocol)
 
 add_executable(test_framing tests/test_framing.cpp)
-target_link_libraries(test_framing PRIVATE meckchat_core)
+target_include_directories(test_framing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_framing PRIVATE meckchat_core Qt6::Core)
 add_test(NAME FramingTest COMMAND test_framing)
 
 install(TARGETS meckchat-linux
