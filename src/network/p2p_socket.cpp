@@ -1,5 +1,6 @@
 #include "meckchat/network/p2p_socket.h"
 #include "meckchat/core/logger.h"
+#include <QtEndian>
 
 namespace MeckChat::Network {
 
