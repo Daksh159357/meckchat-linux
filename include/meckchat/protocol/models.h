@@ -39,6 +39,10 @@ struct DiscoveryRequest {
     static std::optional<DiscoveryRequest> fromJson(const QJsonObject &json);
 };
 
+constexpr int MAX_CHAT_MESSAGE_CONTENT_SIZE = 64 * 1024; // 64 KiB
+
+QString generateMessageId();
+
 struct ChatMessage {
     QString messageId;
     QString senderDeviceId;
@@ -60,16 +64,100 @@ struct MessageAck {
     static std::optional<MessageAck> fromJson(const QJsonObject &json);
 };
 
+struct TypingIndicator {
+    QString senderDeviceId;
+    QString recipientDeviceId;
+    bool isTyping{false};
+    qint64 timestamp{0};
+
+    QJsonObject toJson() const;
+    static std::optional<TypingIndicator> fromJson(const QJsonObject &json);
+};
+
+constexpr int DEFAULT_FILE_CHUNK_SIZE = 65536; // 64 KiB
+
+QString generateTransferId();
+QString sanitizeFileName(const QString &rawName);
+
 struct FileOffer {
     QString transferId;
     QString fileName;
     qint64 fileSize{0};
     QString sha256;
-    int chunkSize{65536};
+    int chunkSize{DEFAULT_FILE_CHUNK_SIZE};
     int totalChunks{0};
 
     QJsonObject toJson() const;
     static std::optional<FileOffer> fromJson(const QJsonObject &json);
+};
+
+struct FileAccept {
+    QString transferId;
+
+    QJsonObject toJson() const;
+    static std::optional<FileAccept> fromJson(const QJsonObject &json);
+};
+
+struct FileReject {
+    QString transferId;
+    QString reason{"user_rejected"};
+
+    QJsonObject toJson() const;
+    static std::optional<FileReject> fromJson(const QJsonObject &json);
+};
+
+struct FileComplete {
+    QString transferId;
+    QString sha256;
+    QString status{"verified"};
+
+    QJsonObject toJson() const;
+    static std::optional<FileComplete> fromJson(const QJsonObject &json);
+};
+
+struct FileCancel {
+    QString transferId;
+    QString reason{"cancelled"};
+
+    QJsonObject toJson() const;
+    static std::optional<FileCancel> fromJson(const QJsonObject &json);
+};
+
+struct FileChunk {
+    static QByteArray encode(const QString &transferId, uint32_t chunkIndex, const QByteArray &chunkData);
+    static bool decode(const QByteArray &rawBytes, QString &transferId, uint32_t &chunkIndex, QByteArray &chunkData);
+};
+
+struct PairingRequest {
+    QString sessionId;
+    QString senderDeviceId;
+    QString receiverDeviceId;
+    qint64 timestamp{0};
+    QString saltBase64;
+    QString ephemeralPublicKeyBase64;
+    QString proposedVirtualIp;
+    QString authProofBase64;
+
+    QJsonObject toJson() const;
+    static std::optional<PairingRequest> fromJson(const QJsonObject &json);
+    QByteArray buildTranscriptMessage() const;
+};
+
+struct PairingResponse {
+    QString sessionId;
+    QString senderDeviceId;
+    QString receiverDeviceId;
+    qint64 timestamp{0};
+    QString saltBase64;
+    QString ephemeralPublicKeyBase64;
+    QString proposedVirtualIp;
+    QString authProofBase64;
+    QString status{"accepted"}; // "accepted" | "rejected"
+    std::optional<QString> errorMessage;
+
+    QJsonObject toJson() const;
+    static std::optional<PairingResponse> fromJson(const QJsonObject &json);
+    QByteArray buildTranscriptMessage() const;
 };
 
 } // namespace MeckChat::Protocol
