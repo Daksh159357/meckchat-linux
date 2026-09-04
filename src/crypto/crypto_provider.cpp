@@ -7,6 +7,7 @@
 #include <openssl/params.h>
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
+#include <openssl/provider.h>
 
 #ifndef OSSL_KDF_PARAM_PASSWORD
 #define OSSL_KDF_PARAM_PASSWORD "pass"
@@ -199,10 +200,28 @@ std::optional<QByteArray> CryptoProvider::deriveArgon2idKey(
         return std::nullopt;
     }
 
+    OSSL_PROVIDER_load(nullptr, "default");
     EVP_KDF *kdf = EVP_KDF_fetch(nullptr, "ARGON2ID", nullptr);
     if (!kdf) {
-        Core::Logger::error("CryptoProvider", "EVP_KDF_fetch for ARGON2ID failed. OpenSSL 3 provider missing.");
-        return std::nullopt;
+        Core::Logger::warning("CryptoProvider", "EVP_KDF_fetch for ARGON2ID unavailable on this OpenSSL version. Falling back to PBKDF2-HMAC-SHA256.");
+        QByteArray derivedKey(static_cast<int>(keyLen), 0);
+        QByteArray passUtf8 = password.toUtf8();
+        int res = PKCS5_PBKDF2_HMAC(
+            passUtf8.constData(),
+            passUtf8.size(),
+            reinterpret_cast<const unsigned char*>(salt.constData()),
+            static_cast<int>(salt.size()),
+            iterations > 0 ? static_cast<int>(iterations * 1000) : 100000,
+            EVP_sha256(),
+            static_cast<int>(keyLen),
+            reinterpret_cast<unsigned char*>(derivedKey.data())
+        );
+        secureCleanse(passUtf8);
+        if (res != 1) {
+            Core::Logger::error("CryptoProvider", "PBKDF2 key derivation failed.");
+            return std::nullopt;
+        }
+        return derivedKey;
     }
 
     EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
