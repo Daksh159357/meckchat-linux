@@ -8,6 +8,30 @@
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
 
+#ifndef OSSL_KDF_PARAM_PASSWORD
+#define OSSL_KDF_PARAM_PASSWORD "pass"
+#endif
+
+#ifndef OSSL_KDF_PARAM_SALT
+#define OSSL_KDF_PARAM_SALT "salt"
+#endif
+
+#ifndef OSSL_KDF_PARAM_ITER
+#define OSSL_KDF_PARAM_ITER "iter"
+#endif
+
+#ifndef OSSL_KDF_PARAM_ARGON2_LANES
+#define OSSL_KDF_PARAM_ARGON2_LANES "lanes"
+#endif
+
+#ifndef OSSL_KDF_PARAM_ARGON2_MEMCOST
+#define OSSL_KDF_PARAM_ARGON2_MEMCOST "memcost"
+#endif
+
+#ifndef OSSL_KDF_PARAM_ARGON2_TIME
+#define OSSL_KDF_PARAM_ARGON2_TIME "time"
+#endif
+
 namespace MeckChat::Crypto {
 
 KeyPair::~KeyPair() {

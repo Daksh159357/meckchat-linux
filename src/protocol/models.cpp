@@ -2,6 +2,7 @@
 #include <QUuid>
 #include <QFileInfo>
 #include <QDir>
+#include <QtEndian>
 
 namespace MeckChat::Protocol {
 
