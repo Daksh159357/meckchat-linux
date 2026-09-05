@@ -1,4 +1,3 @@
-#include <cassert>
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
@@ -13,27 +12,34 @@
 using namespace MeckChat::Network;
 using namespace MeckChat::Crypto;
 
+#define TEST_CHECK(cond) do { \
+    if (!(cond)) { \
+        std::cerr << "TEST ASSERTION FAILED: " #cond << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
+        std::exit(1); \
+    } \
+} while(0)
+
 void testSubnetValidation() {
     std::cout << "[RUN] testSubnetValidation" << std::endl;
 
     // Valid 10.77.0.0/16 addresses
-    assert(NetlinkWireGuard::isSubnetValid("10.77.0.2"));
-    assert(NetlinkWireGuard::isSubnetValid("10.77.1.50"));
-    assert(NetlinkWireGuard::isSubnetValid("10.77.100.200"));
-    assert(NetlinkWireGuard::isSubnetValid("10.77.255.254"));
+    TEST_CHECK(NetlinkWireGuard::isSubnetValid("10.77.0.2"));
+    TEST_CHECK(NetlinkWireGuard::isSubnetValid("10.77.1.50"));
+    TEST_CHECK(NetlinkWireGuard::isSubnetValid("10.77.100.200"));
+    TEST_CHECK(NetlinkWireGuard::isSubnetValid("10.77.255.254"));
 
     // Invalid Subnet / Outside 10.77.0.0/16
-    assert(!NetlinkWireGuard::isSubnetValid("10.78.0.1"));
-    assert(!NetlinkWireGuard::isSubnetValid("192.168.1.1"));
-    assert(!NetlinkWireGuard::isSubnetValid("172.16.0.2"));
-    assert(!NetlinkWireGuard::isSubnetValid("127.0.0.1"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("10.78.0.1"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("192.168.1.1"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("172.16.0.2"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("127.0.0.1"));
 
     // Boundaries & Malformed
-    assert(!NetlinkWireGuard::isSubnetValid("10.77.0.0"));       // Network
-    assert(!NetlinkWireGuard::isSubnetValid("10.77.255.255"));   // Broadcast
-    assert(!NetlinkWireGuard::isSubnetValid(""));
-    assert(!NetlinkWireGuard::isSubnetValid("not_an_ip"));
-    assert(!NetlinkWireGuard::isSubnetValid("::1"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("10.77.0.0"));       // Network
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("10.77.255.255"));   // Broadcast
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid(""));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("not_an_ip"));
+    TEST_CHECK(!NetlinkWireGuard::isSubnetValid("::1"));
 
     std::cout << "[PASS] testSubnetValidation" << std::endl;
 }
@@ -42,20 +48,20 @@ void testKeyValidation() {
     std::cout << "[RUN] testKeyValidation" << std::endl;
 
     auto kp = CryptoProvider::generateX25519KeyPair();
-    assert(kp.has_value());
+    TEST_CHECK(kp.has_value());
 
     QString validKeyBase64 = kp->publicKey.toBase64();
-    assert(NetlinkWireGuard::isValidBase64Key(validKeyBase64));
+    TEST_CHECK(NetlinkWireGuard::isValidBase64Key(validKeyBase64));
 
     // Invalid Key lengths
     QByteArray shortKey(31, 0x11);
-    assert(!NetlinkWireGuard::isValidBase64Key(shortKey.toBase64()));
+    TEST_CHECK(!NetlinkWireGuard::isValidBase64Key(shortKey.toBase64()));
 
     QByteArray longKey(33, 0x22);
-    assert(!NetlinkWireGuard::isValidBase64Key(longKey.toBase64()));
+    TEST_CHECK(!NetlinkWireGuard::isValidBase64Key(longKey.toBase64()));
 
-    assert(!NetlinkWireGuard::isValidBase64Key(""));
-    assert(!NetlinkWireGuard::isValidBase64Key("Invalid!@#$Base64"));
+    TEST_CHECK(!NetlinkWireGuard::isValidBase64Key(""));
+    TEST_CHECK(!NetlinkWireGuard::isValidBase64Key("Invalid!@#$Base64"));
 
     std::cout << "[PASS] testKeyValidation" << std::endl;
 }
@@ -66,20 +72,20 @@ void testEndpointParsing() {
     QHostAddress addr;
     quint16 port = 0;
 
-    assert(NetlinkWireGuard::parseEndpoint("192.168.1.100:51820", addr, port));
-    assert(addr == QHostAddress("192.168.1.100"));
-    assert(port == 51820);
+    TEST_CHECK(NetlinkWireGuard::parseEndpoint("192.168.1.100:51820", addr, port));
+    TEST_CHECK(addr == QHostAddress("192.168.1.100"));
+    TEST_CHECK(port == 51820);
 
-    assert(NetlinkWireGuard::parseEndpoint("10.0.0.5:7788", addr, port));
-    assert(addr == QHostAddress("10.0.0.5"));
-    assert(port == 7788);
+    TEST_CHECK(NetlinkWireGuard::parseEndpoint("10.0.0.5:7788", addr, port));
+    TEST_CHECK(addr == QHostAddress("10.0.0.5"));
+    TEST_CHECK(port == 7788);
 
     // Invalid endpoints
-    assert(!NetlinkWireGuard::parseEndpoint("192.168.1.100", addr, port));
-    assert(!NetlinkWireGuard::parseEndpoint("192.168.1.100:0", addr, port));
-    assert(!NetlinkWireGuard::parseEndpoint("192.168.1.100:70000", addr, port));
-    assert(!NetlinkWireGuard::parseEndpoint("", addr, port));
-    assert(!NetlinkWireGuard::parseEndpoint(":51820", addr, port));
+    TEST_CHECK(!NetlinkWireGuard::parseEndpoint("192.168.1.100", addr, port));
+    TEST_CHECK(!NetlinkWireGuard::parseEndpoint("192.168.1.100:0", addr, port));
+    TEST_CHECK(!NetlinkWireGuard::parseEndpoint("192.168.1.100:70000", addr, port));
+    TEST_CHECK(!NetlinkWireGuard::parseEndpoint("", addr, port));
+    TEST_CHECK(!NetlinkWireGuard::parseEndpoint(":51820", addr, port));
 
     std::cout << "[PASS] testEndpointParsing" << std::endl;
 }
@@ -89,26 +95,26 @@ void testWireGuardServicePeerManagement() {
 
     WireGuardService service;
     auto kp = CryptoProvider::generateX25519KeyPair();
-    assert(kp.has_value());
+    TEST_CHECK(kp.has_value());
     QString pubKeyBase64 = kp->publicKey.toBase64();
 
     // 1. Add valid peer
     bool ok = service.addPeer(pubKeyBase64, "10.77.0.5", "192.168.1.50:51820", 25);
-    assert(ok);
-    assert(service.isPeerConfigured(pubKeyBase64));
-    assert(service.peers().size() == 1);
+    TEST_CHECK(ok);
+    TEST_CHECK(service.isPeerConfigured(pubKeyBase64));
+    TEST_CHECK(service.peers().size() == 1);
 
     // 2. Reject peer with invalid subnet
     auto kp2 = CryptoProvider::generateX25519KeyPair();
-    assert(!service.addPeer(kp2->publicKey.toBase64(), "192.168.1.5"));
+    TEST_CHECK(!service.addPeer(kp2->publicKey.toBase64(), "192.168.1.5"));
 
     // 3. Reject peer with invalid key
-    assert(!service.addPeer("InvalidKey", "10.77.0.6"));
+    TEST_CHECK(!service.addPeer("InvalidKey", "10.77.0.6"));
 
     // 4. Remove peer
-    assert(service.removePeer(pubKeyBase64));
-    assert(!service.isPeerConfigured(pubKeyBase64));
-    assert(service.peers().isEmpty());
+    TEST_CHECK(service.removePeer(pubKeyBase64));
+    TEST_CHECK(!service.isPeerConfigured(pubKeyBase64));
+    TEST_CHECK(service.peers().isEmpty());
 
     std::cout << "[PASS] testWireGuardServicePeerManagement" << std::endl;
 }
@@ -130,7 +136,7 @@ void testWireGuardKernelSupportAndIntegration() {
         WireGuardService service;
 
         auto kp = CryptoProvider::generateX25519KeyPair();
-        assert(kp.has_value());
+        TEST_CHECK(kp.has_value());
 
         // RAII-style cleanup guard
         struct CleanupGuard {
@@ -143,22 +149,22 @@ void testWireGuardKernelSupportAndIntegration() {
 
         bool started = service.startTunnel(testIfName, "10.77.99.1", kp->privateKey.toBase64(), 51825);
         if (started) {
-            assert(service.status() == TunnelStatus::Up);
-            assert(NetlinkWireGuard::interfaceExists(testIfName));
+            TEST_CHECK(service.status() == TunnelStatus::Up);
+            TEST_CHECK(NetlinkWireGuard::interfaceExists(testIfName));
 
             // Add peer in kernel
             auto peerKp = CryptoProvider::generateX25519KeyPair();
-            assert(peerKp.has_value());
-            assert(service.addPeer(peerKp->publicKey.toBase64(), "10.77.99.2", "127.0.0.1:51826"));
+            TEST_CHECK(peerKp.has_value());
+            TEST_CHECK(service.addPeer(peerKp->publicKey.toBase64(), "10.77.99.2", "127.0.0.1:51826"));
 
             // Verify kernel device status
             QString errStr;
             auto devStatus = NetlinkWireGuard::getWireGuardDevice(testIfName, errStr);
-            assert(devStatus.has_value());
-            assert(devStatus->listenPort == 51825);
+            TEST_CHECK(devStatus.has_value());
+            TEST_CHECK(devStatus->listenPort == 51825);
 
             service.stopTunnel();
-            assert(service.status() == TunnelStatus::Down);
+            TEST_CHECK(service.status() == TunnelStatus::Down);
             std::cout << "[PASS] testWireGuardKernelSupportAndIntegration (REAL WIREGUARD KERNEL INTEGRATION TEST: PASS)" << std::endl;
         } else {
             std::cout << "  -> Kernel creation failed: " << service.lastError().toStdString() << std::endl;
